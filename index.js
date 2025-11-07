@@ -7,10 +7,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
-// ✅ Universal proxy route
 app.get("/", async (req, res) => {
   const targetUrl = req.query.url;
-
   if (!targetUrl) {
     return res.status(400).json({ error: "Missing ?url parameter" });
   }
@@ -18,7 +16,6 @@ app.get("/", async (req, res) => {
   try {
     console.log("Fetching:", targetUrl);
 
-    // Add Roblox-style headers so the request isn't blocked
     const response = await fetch(targetUrl, {
       headers: {
         "User-Agent": "Roblox/WinInet",
@@ -28,7 +25,6 @@ app.get("/", async (req, res) => {
       }
     });
 
-    // Forward Roblox API's response
     const text = await response.text();
     res.setHeader("Content-Type", "application/json");
     res.send(text);
