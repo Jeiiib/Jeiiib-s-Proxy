@@ -1,4 +1,3 @@
-// index.js
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
@@ -8,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
-// ✅ This route handles requests like /?url=https://catalog.roblox.com/v1/...
+// ✅ Universal proxy route
 app.get("/", async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -17,10 +16,22 @@ app.get("/", async (req, res) => {
   }
 
   try {
-    const response = await fetch(targetUrl);
-    const data = await response.text(); // don’t force JSON (some Roblox endpoints return text)
+    console.log("Fetching:", targetUrl);
+
+    // Add Roblox-style headers so the request isn't blocked
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent": "Roblox/WinInet",
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive"
+      }
+    });
+
+    // Forward Roblox API's response
+    const text = await response.text();
     res.setHeader("Content-Type", "application/json");
-    res.send(data);
+    res.send(text);
   } catch (error) {
     console.error("Proxy error:", error);
     res.status(500).json({ error: "Failed to fetch target URL" });
@@ -28,5 +39,5 @@ app.get("/", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Proxy running on port ${PORT}`);
+  console.log(`✅ Roblox Proxy running on port ${PORT}`);
 });
