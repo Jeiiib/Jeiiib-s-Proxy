@@ -3,37 +3,46 @@ import fetch from "node-fetch";
 import cors from "cors";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
+app.use(express.json());
 
 app.get("/", async (req, res) => {
-  const targetUrl = req.query.url;
-  if (!targetUrl) {
+  const target = req.query.url;
+  if (!target) {
     return res.status(400).json({ error: "Missing ?url parameter" });
   }
 
-  try {
-    console.log("Fetching:", targetUrl);
+  console.log("Fetching:", target);
 
-    const response = await fetch(targetUrl, {
+  try {
+    const response = await fetch(target, {
       headers: {
-        "User-Agent": "Roblox/WinInet",
+        "User-Agent":
+          "RobloxProxy/1.0 (https://jeiiib-s-proxy.onrender.com)",
         "Accept": "application/json",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive"
-      }
+      },
     });
 
-    const text = await response.text();
-    res.setHeader("Content-Type", "application/json");
-    res.send(text);
-  } catch (error) {
-    console.error("Proxy error:", error);
-    res.status(500).json({ error: "Failed to fetch target URL" });
+    const contentType = response.headers.get("content-type") || "";
+
+    // Handle Roblox’s JSON data safely
+    if (response.ok && contentType.includes("application/json")) {
+      const data = await response.json();
+      res.json(data);
+    } else {
+      const text = await response.text();
+      res.status(response.status).json({
+        error: "Invalid response",
+        status: response.status,
+        message: text.slice(0, 500),
+      });
+    }
+  } catch (err) {
+    console.error("Proxy error:", err);
+    res.status(500).json({ error: "Proxy failed", details: err.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Roblox Proxy running on port ${PORT}`);
+app.listen(10000, () => {
+  console.log("✅ Roblox Proxy running on port 10000");
 });
